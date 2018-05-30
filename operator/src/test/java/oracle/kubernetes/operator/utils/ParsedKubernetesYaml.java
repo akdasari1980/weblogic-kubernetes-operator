@@ -17,8 +17,10 @@ import io.kubernetes.client.models.V1PersistentVolumeClaim;
 import io.kubernetes.client.models.V1Secret;
 import io.kubernetes.client.models.V1Service;
 import io.kubernetes.client.models.V1ServiceAccount;
+import io.kubernetes.client.models.V1beta1APIService;
 import io.kubernetes.client.models.V1beta1ClusterRole;
 import io.kubernetes.client.models.V1beta1ClusterRoleBinding;
+import io.kubernetes.client.models.V1beta1Ingress;
 import io.kubernetes.client.models.V1beta1RoleBinding;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,11 +40,13 @@ public class ParsedKubernetesYaml {
   @SuppressWarnings("rawtypes")
   protected ParsedKubernetesYaml(Path path) throws Exception {
     // create handlers for all the supported k8s types
+    kindToHandler.put(KIND_API_SERVICE, new APIServiceHandler());
     kindToHandler.put(KIND_CONFIG_MAP, new ConfigMapHandler());
     kindToHandler.put(KIND_CLUSTER_ROLE, new ClusterRoleHandler());
     kindToHandler.put(KIND_CLUSTER_ROLE_BINDING, new ClusterRoleBindingHandler());
     kindToHandler.put(KIND_DEPLOYMENT, new DeploymentHandler());
     kindToHandler.put(KIND_DOMAIN, new DomainHandler());
+    kindToHandler.put(KIND_INGRESS, new IngressHandler());
     kindToHandler.put(KIND_JOB, new JobHandler());
     kindToHandler.put(KIND_NAMESPACE, new NamespaceHandler());
     kindToHandler.put(KIND_PERSISTENT_VOLUME, new PersistentVolumeHandler());
@@ -108,6 +112,11 @@ public class ParsedKubernetesYaml {
   */
 
   @SuppressWarnings("unchecked")
+  public TypeHandler<V1beta1APIService> getAPIServices() {
+    return (TypeHandler<V1beta1APIService>) getHandler(KIND_API_SERVICE);
+  }
+
+  @SuppressWarnings("unchecked")
   public TypeHandler<V1ConfigMap> getConfigMaps() {
     return (TypeHandler<V1ConfigMap>) getHandler(KIND_CONFIG_MAP);
   }
@@ -130,6 +139,11 @@ public class ParsedKubernetesYaml {
   @SuppressWarnings("unchecked")
   public TypeHandler<Domain> getDomains() {
     return (TypeHandler<Domain>) getHandler(KIND_DOMAIN);
+  }
+
+  @SuppressWarnings("unchecked")
+  public TypeHandler<V1beta1Ingress> getIngresses() {
+    return (TypeHandler<V1beta1Ingress>) getHandler(KIND_INGRESS);
   }
 
   @SuppressWarnings("unchecked")
@@ -250,6 +264,17 @@ public class ParsedKubernetesYaml {
     }
   }
 
+  private static class APIServiceHandler extends TypeHandler<V1beta1APIService> {
+    private APIServiceHandler() {
+      super(V1beta1APIService.class);
+    }
+
+    @Override
+    protected V1ObjectMeta getMetadata(V1beta1APIService instance) {
+      return instance.getMetadata();
+    }
+  }
+
   private static class ConfigMapHandler extends TypeHandler<V1ConfigMap> {
     private ConfigMapHandler() {
       super(V1ConfigMap.class);
@@ -301,6 +326,17 @@ public class ParsedKubernetesYaml {
 
     @Override
     protected V1ObjectMeta getMetadata(Domain instance) {
+      return instance.getMetadata();
+    }
+  }
+
+  private static class IngressHandler extends TypeHandler<V1beta1Ingress> {
+    private IngressHandler() {
+      super(V1beta1Ingress.class);
+    }
+
+    @Override
+    protected V1ObjectMeta getMetadata(V1beta1Ingress instance) {
       return instance.getMetadata();
     }
   }

@@ -24,6 +24,9 @@ import oracle.kubernetes.operator.utils.ParsedDeleteWeblogicDomainJobYaml;
 import oracle.kubernetes.operator.utils.ParsedDomainCustomResourceYaml;
 import oracle.kubernetes.operator.utils.ParsedTraefikSecurityYaml;
 import oracle.kubernetes.operator.utils.ParsedTraefikYaml;
+import oracle.kubernetes.operator.utils.ParsedVoyagerIngressYaml;
+import oracle.kubernetes.operator.utils.ParsedVoyagerOperatorSecurityYaml;
+import oracle.kubernetes.operator.utils.ParsedVoyagerOperatorYaml;
 import oracle.kubernetes.operator.utils.ParsedWeblogicDomainPersistentVolumeClaimYaml;
 import oracle.kubernetes.operator.utils.ParsedWeblogicDomainPersistentVolumeYaml;
 import oracle.kubernetes.weblogic.domain.v1.Domain;
@@ -81,6 +84,18 @@ public abstract class CreateDomainGeneratedFilesBaseTest {
 
   protected ParsedApacheYaml getApacheYaml() {
     return getGeneratedFiles().getApacheYaml();
+  }
+
+  protected ParsedVoyagerIngressYaml getVoyagerIngressYaml() {
+    return getGeneratedFiles().getVoyagerIngressYaml();
+  }
+
+  protected ParsedVoyagerOperatorSecurityYaml getVoyagerOperatorSecurityYaml() {
+    return getGeneratedFiles().getVoyagerOperatorSecurityYaml();
+  }
+
+  protected ParsedVoyagerOperatorYaml getVoyagerOperatorYaml() {
+    return getGeneratedFiles().getVoyagerOperatorYaml();
   }
 
   protected ParsedWeblogicDomainPersistentVolumeClaimYaml
@@ -741,6 +756,38 @@ public abstract class CreateDomainGeneratedFilesBaseTest {
                         .nodePort(Integer.parseInt(getInputs().getLoadBalancerWebPort()))));
   }
 
+  protected V1Service getActualVoyagerService() {
+    return getVoyagerOperatorYaml().getVoyagerOperatorService();
+  }
+
+  protected V1Service getExpectedVoyagerService() {
+    return newService()
+        .metadata(
+            newObjectMeta()
+                .name(getVoyagerOperatorName())
+                .namespace(getInputs().getNamespace())
+                .putLabelsItem(RESOURCE_VERSION_LABEL, VOYAGER_LOAD_BALANCER_V1)
+                .putLabelsItem(APP_LABEL, getVoyagerName()))
+        .spec(
+            newServiceSpec()
+                .putSelectorItem(APP_LABEL, getVoyagerName())
+                .addPortsItem(
+                    newServicePort()
+                        .name("admission")
+                        .port(443)
+                        .targetPort(newIntOrString(8443)))
+                .addPortsItem(
+                    newServicePort()
+                        .name("ops")
+                        .port(56790)
+                        .targetPort(newIntOrString(56790)))
+                .addPortsItem(
+                    newServicePort()
+                        .name("acme")
+                        .port(56791)
+                        .targetPort(newIntOrString(56791))));
+  }
+
   protected V1Service getActualTraefikService() {
     return getTraefikYaml().getTraefikService();
   }
@@ -980,5 +1027,13 @@ public abstract class CreateDomainGeneratedFilesBaseTest {
 
   protected String getApacheAppName() {
     return "apache-webtier";
+  }
+
+  protected String getVoyagerName() {
+    return "voyager";
+  }
+
+  protected String getVoyagerOperatorName() {
+    return getVoyagerName() + "-operator";
   }
 }
