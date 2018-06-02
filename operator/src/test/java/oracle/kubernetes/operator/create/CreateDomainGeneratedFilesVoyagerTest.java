@@ -16,77 +16,92 @@ import oracle.kubernetes.operator.utils.CreateDomainInputs;
 import oracle.kubernetes.operator.utils.ParsedVoyagerOperatorYaml;
 import oracle.kubernetes.weblogic.domain.v1.Domain;
 import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * Tests that the all artifacts in the yaml files that create-weblogic-domain.sh creates are correct
  * when the load balancer is voyager.
  */
 public class CreateDomainGeneratedFilesVoyagerTest
-    extends CreateDomainGeneratedFilesBaseTest {
+    extends CreateDomainGeneratedFilesOptionalFeaturesEnabledTest {
 
   @BeforeClass
   public static void setup() throws Exception {
     setup(
         CreateDomainInputs.newInputs()
-            .loadBalancer(LOAD_BALANCER_VOYAGER));
+            .exposeAdminNodePort("true")
+            .exposeAdminT3Channel("true")
+            .clusterType("CONFIGURED")
+            .weblogicImagePullSecretName("test-weblogic-image-pull-secret-name")
+            .loadBalancer(LOAD_BALANCER_VOYAGER)
+            .loadBalancerAppPrepath("/loadBalancerAppPrePath")
+            .loadBalancerExposeAdminPort("false")
+            .weblogicDomainStorageType(STORAGE_TYPE_NFS)
+            .productionModeEnabled("true"));
   }
 
-/**
+  @Test
   @Override
   public void generatesCorrect_loadBalancerDeployment() throws Exception {
     assertThat(getActualVoyagerDeployment(), yamlEqualTo(getExpectedVoyagerDeployment()));
   }
 
-  @Override
+/*
+  @Test
   public void generatesCorrect_loadBalancerSecret() throws Exception {
     assertThat(getActualVoyagerSecret(), yamlEqualTo(getExpectedVoyagerSecret()));
   }
+*/
 
+  @Test
   @Override
   public void generatesCorrect_loadBalancerService() throws Exception {
     assertThat(getActualVoyagerService(), yamlEqualTo(getExpectedVoyagerService())); //voyager-operator
   }
 
-  @Override
+  @Test
   public void generatesCorrect_loadBalancerAPIService() throws Exception {
     assertThat(getActualVoyagerAPIService(), yamlEqualTo(getExpectedVoyagerAPIService()));
   }
 
+  @Test
   @Override
   public void generatesCorrect_loadBalancerServiceAccount() throws Exception {
     assertThat(getActualVoyagerServiceAccount(), yamlEqualTo(getExpectedVoyagerServiceAccount()));
   }
 
+  @Test
   @Override
   public void generatesCorrect_loadBalancerClusterRole() throws Exception {
     assertThat(getActualVoyagerClusterRole(), yamlEqualTo(getExpectedVoyagerClusterRole())); //voyager-operator
   }
 
+  @Test
   @Override
   public void generatesCorrect_loadBalancerClusterRoleBinding() throws Exception {
     assertThat(
         getActualVoyagerClusterRoleBinding(), yamlEqualTo(getExpectedVoyagerClusterRoleBinding())); //voyager-operator
   }
 
-  @Override
-  public void generatesCorrect_loadBalancerRoleBinding() throws Exception {
+  @Test
+  public void generatesCorrect_loadBalancerAuthenticationReaderRoleBinding() throws Exception {
     assertThat(
-        getActualVoyagerRoleBinding(), yamlEqualTo(getExpectedVoyagerRoleBinding())); //voyager-apiserver-extension-server-authentication-reader
+        getActualVoyagerAuthenticationReaderRoleBinding(), yamlEqualTo(getExpectedVoyagerAuthenticationReaderRoleBinding())); //voyager-apiserver-extension-server-authentication-reader
   }
 
-  @Override
+  @Test
   public void generatesCorrect_loadBalancerClusterRoleBinding1() throws Exception {
     assertThat(
         getActualVoyagerClusterRoleBinding(), yamlEqualTo(getExpectedVoyagerClusterRoleBinding())); //voyager-apiserver-auth-delegator
   }
-
+/*
   @Override
-  public void generatesCorrect_loadBalancerClusterRole() throws Exception {
+  public void generatesCorrect_loadBalancerClusterRole1() throws Exception {
     assertThat(getActualVoyagerClusterRole(), yamlEqualTo(getExpectedVoyagerClusterRole())); //appscode:voyager:edit
   }
 
   @Override
-  public void generatesCorrect_loadBalancerClusterRole() throws Exception {
+  public void generatesCorrect_loadBalancerClusterRole2() throws Exception {
     assertThat(getActualVoyagerClusterRole(), yamlEqualTo(getExpectedVoyagerClusterRole())); //appscode:voyager:view
   }
 
@@ -96,7 +111,7 @@ public class CreateDomainGeneratedFilesVoyagerTest
   }
 
   @Override
-  public void generatesCorrect_loadBalancerService() throws Exception {
+  public void generatesCorrect_loadBalancerService1() throws Exception {
     assertThat(getActualVoyagerService(), yamlEqualTo(getExpectedVoyagerService())); //domain1-voyager-stats
   }
 */
@@ -111,9 +126,10 @@ public class CreateDomainGeneratedFilesVoyagerTest
   public void loadBalancerYaml_hasCorrectNumberOfObjects() throws Exception {
     assertThat(getVoyagerOperatorYaml().getObjectCount(), is(getVoyagerOperatorYaml().getExpectedObjectCount()));
   }
-
-  //@Override
+/*
+  @Override
   public void loadBalancerIngressYaml_hasCorrectNumberOfObjects() throws Exception {
     assertThat(getVoyagerIngressYaml().getObjectCount(), is(getVoyagerIngressYaml().getExpectedObjectCount()));
   }
+*/
 }

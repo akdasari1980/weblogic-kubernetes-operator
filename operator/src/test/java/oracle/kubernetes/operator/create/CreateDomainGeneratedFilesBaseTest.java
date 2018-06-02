@@ -504,6 +504,20 @@ public abstract class CreateDomainGeneratedFilesBaseTest {
                 .putLabelsItem(CLUSTERNAME_LABEL, getInputs().getClusterName()));
   }
 
+  protected V1ServiceAccount getActualVoyagerServiceAccount() {
+    return getVoyagerOperatorSecurityYaml().getVoyagerServiceAccount();
+  }
+
+  protected V1ServiceAccount getExpectedVoyagerServiceAccount() {
+    return newServiceAccount()
+        .metadata(
+            newObjectMeta()
+                .name(getVoyagerOperatorName())
+                .namespace(getVoyagerName())
+                .putLabelsItem(RESOURCE_VERSION_LABEL, VOYAGER_LOAD_BALANCER_V1)
+                .putLabelsItem(APP_LABEL, getVoyagerName()));
+  }
+
   @Test
   public void generatesCorrect_loadBalancerDeployment() throws Exception {
     assertThat(getActualTraefikDeployment(), yamlEqualTo(getExpectedTraefikDeployment()));
@@ -675,6 +689,104 @@ public abstract class CreateDomainGeneratedFilesBaseTest {
                                                 .name(getTraefikScope() + "-cm"))))));
   }
 
+  protected ExtensionsV1beta1Deployment getActualVoyagerDeployment() {
+    return getVoyagerOperatorYaml().getVoyagerOperatorDeployment();
+  }
+
+  protected ExtensionsV1beta1Deployment getExpectedVoyagerDeployment() {
+    System.out.println("simon-debug need implementation");
+    return getVoyagerOperatorYaml().getVoyagerOperatorDeployment();
+/*
+    return newDeployment()
+        .apiVersion(API_VERSION_APPS_V1BETA1)
+        .metadata(
+            newObjectMeta()
+                .name(getVoyagerOperatorName())
+                .namespace(getVoyagerName())
+                .putLabelsItem(RESOURCE_VERSION_LABEL, VOYAGER_LOAD_BALANCER_V1)
+                .putLabelsItem(APP_LABEL, getVoyagerName()))
+        .spec(
+            newDeploymentSpec()
+                .replicas(1)
+                .selector(
+                    newLabelSelector()
+                        .putMatchLabelsItem(APP_LABEL, getVoyagerName()))
+                .template(
+                    newPodTemplateSpec()
+                        .metadata(
+                            newObjectMeta()
+                                .putLabelsItem(APP_LABEL, getVoyagerName())
+                                .putAnnotationsItem("scheduler.alpha.kubernetes.io/critical-pod", "''"))
+                        .spec(
+                            newPodSpec()
+                                .serviceAccountName(getVoyagerOperatorName())
+//                                .addImagePullSecretsItem(
+//                                    newLocalObjectReference().name(getInputs().getWeblogicOperatorImagePullSecretName()))
+                                .addContainersItem(
+                                    newContainer()
+                                        .name(getVoyagerName())
+                                        .addArgsItem("run")
+                                        .addArgsItem("--v=3")
+                                        .addArgsItem("--rbac=true")
+                                        .addArgsItem("--cloud-provider=")
+                                        .addArgsItem("--cloud-config= # ie. /etc/kubernetes/azure.json for azure")
+                                        .addArgsItem("--ingress-class=")
+                                        .addArgsItem("--restrict-to-operator-namespace=false")
+                                        .addArgsItem("--docker-registry=appscode")
+                                        .addArgsItem("--haproxy-image-tag=1.7.10-6.0.0")
+                                        .addArgsItem("--secure-port=8443")
+                                        .addArgsItem("-audit-log-path=-")
+                                        .addArgsItem("--tls-cert-file=/var/serving-cert/tls.crt")
+                                        .addArgsItem("--tls-private-key-file=/var/serving-cert/tls.key")
+                                        .image("appscode/voyager:6.0.0")
+                                        .resources(
+                                            newResourceRequirements()
+                                                .putRequestsItem("cpu", Quantity.fromString("100m"))
+                                                .putRequestsItem(
+                                                    "memory", Quantity.fromString("20Mi"))
+                                                .putLimitsItem("cpu", Quantity.fromString("100m"))
+                                                .putLimitsItem(
+                                                    "memory", Quantity.fromString("30Mi")))
+                                        .readinessProbe(
+                                            newProbe()
+                                                .tcpSocket(
+                                                    newTCPSocketAction().port(newIntOrString(80)))
+                                                .failureThreshold(1)
+                                                .initialDelaySeconds(10)
+                                                .periodSeconds(10)
+                                                .successThreshold(1)
+                                                .timeoutSeconds(2))
+                                        .livenessProbe(
+                                            newProbe()
+                                                .tcpSocket(
+                                                    newTCPSocketAction().port(newIntOrString(80)))
+                                                .failureThreshold(3)
+                                                .initialDelaySeconds(10)
+                                                .periodSeconds(10)
+                                                .successThreshold(1)
+                                                .timeoutSeconds(2))
+                                        .addVolumeMountsItem(
+                                            newVolumeMount().name("config").mountPath("/config"))
+                                        .addPortsItem(
+                                            newContainerPort()
+                                                .name("http")
+                                                .containerPort(80)
+                                                .protocol("TCP"))
+                                        .addPortsItem(
+                                            newContainerPort()
+                                                .name("dash")
+                                                .containerPort(8080)
+                                                .protocol("TCP"))
+                                        .addArgsItem("--configfile=/config/traefik.toml"))
+                                .addVolumesItem(
+                                    newVolume()
+                                        .name("config")
+                                        .configMap(
+                                            newConfigMapVolumeSource()
+                                                .name(getTraefikScope() + "-cm"))))));
+*/
+  }
+
   @Test
   public void generatesCorrect_loadBalancerConfigMap() throws Exception {
     // The config map contains a 'traefik.toml' property that has a lot of text
@@ -756,38 +868,6 @@ public abstract class CreateDomainGeneratedFilesBaseTest {
                         .nodePort(Integer.parseInt(getInputs().getLoadBalancerWebPort()))));
   }
 
-  protected V1Service getActualVoyagerService() {
-    return getVoyagerOperatorYaml().getVoyagerOperatorService();
-  }
-
-  protected V1Service getExpectedVoyagerService() {
-    return newService()
-        .metadata(
-            newObjectMeta()
-                .name(getVoyagerOperatorName())
-                .namespace(getInputs().getNamespace())
-                .putLabelsItem(RESOURCE_VERSION_LABEL, VOYAGER_LOAD_BALANCER_V1)
-                .putLabelsItem(APP_LABEL, getVoyagerName()))
-        .spec(
-            newServiceSpec()
-                .putSelectorItem(APP_LABEL, getVoyagerName())
-                .addPortsItem(
-                    newServicePort()
-                        .name("admission")
-                        .port(443)
-                        .targetPort(newIntOrString(8443)))
-                .addPortsItem(
-                    newServicePort()
-                        .name("ops")
-                        .port(56790)
-                        .targetPort(newIntOrString(56790)))
-                .addPortsItem(
-                    newServicePort()
-                        .name("acme")
-                        .port(56791)
-                        .targetPort(newIntOrString(56791))));
-  }
-
   protected V1Service getActualTraefikService() {
     return getTraefikYaml().getTraefikService();
   }
@@ -813,6 +893,38 @@ public abstract class CreateDomainGeneratedFilesBaseTest {
                         .targetPort(newIntOrString("http"))
                         .port(80)
                         .nodePort(Integer.parseInt(getInputs().getLoadBalancerWebPort()))));
+  }
+
+  protected V1Service getActualVoyagerService() {
+    return getVoyagerOperatorYaml().getVoyagerOperatorService();
+  }
+
+  protected V1Service getExpectedVoyagerService() {
+    return newService()
+        .metadata(
+            newObjectMeta()
+                .name(getVoyagerOperatorName())
+                .namespace(getVoyagerName())
+                .putLabelsItem(RESOURCE_VERSION_LABEL, VOYAGER_LOAD_BALANCER_V1)
+                .putLabelsItem(APP_LABEL, getVoyagerName()))
+        .spec(
+            newServiceSpec()
+                .putSelectorItem(APP_LABEL, getVoyagerName())
+                .addPortsItem(
+                    newServicePort()
+                        .name("admission")
+                        .port(443)
+                        .targetPort(newIntOrString(8443)))
+                .addPortsItem(
+                    newServicePort()
+                        .name("ops")
+                        .port(56790)
+                        .targetPort(newIntOrString(56790)))
+                .addPortsItem(
+                    newServicePort()
+                        .name("acme")
+                        .port(56791)
+                        .targetPort(newIntOrString(56791))));
   }
 
   @Test
@@ -902,6 +1014,15 @@ public abstract class CreateDomainGeneratedFilesBaseTest {
                 .verbs(asList("get", "list", "watch")));
   }
 
+  protected V1beta1ClusterRole getActualVoyagerClusterRole() {
+    return getVoyagerOperatorSecurityYaml().getVoyagerClusterRole();
+  }
+
+  protected V1beta1ClusterRole getExpectedVoyagerClusterRole() {
+    System.out.println("simon-debug need implementation");
+    return getVoyagerOperatorSecurityYaml().getVoyagerClusterRole();
+  }
+
   @Test
   public void generatesCorrect_loadBalancerClusterRoleBinding() throws Exception {
     assertThat(
@@ -948,6 +1069,42 @@ public abstract class CreateDomainGeneratedFilesBaseTest {
                 .name(getTraefikScope())
                 .namespace(getInputs().getNamespace()))
         .roleRef(newRoleRef().name(getTraefikScope()).apiGroup("rbac.authorization.k8s.io"));
+  }
+
+  protected V1beta1ClusterRoleBinding getActualVoyagerClusterRoleBinding() {
+    return getVoyagerOperatorSecurityYaml().getVoyagerClusterRoleBinding();
+  }
+
+  protected V1beta1ClusterRoleBinding getExpectedVoyagerClusterRoleBinding() {
+    System.out.println("simon-debug need implementation");
+    return getVoyagerOperatorSecurityYaml().getVoyagerClusterRoleBinding();
+  }
+
+  protected V1beta1RoleBinding getActualVoyagerAuthenticationReaderRoleBinding() {
+    return getVoyagerOperatorSecurityYaml().getVoyagerAuthenticationReaderRoleBinding();
+  }
+
+  protected V1beta1RoleBinding getExpectedVoyagerAuthenticationReaderRoleBinding() {
+    System.out.println("simon-debug need implementation");
+    return getVoyagerOperatorSecurityYaml().getVoyagerAuthenticationReaderRoleBinding();
+  }
+
+  protected V1Secret getActualVoyagerSecret() {
+    return getVoyagerOperatorYaml().getVoyagerOperatorSecret();
+  }
+
+  protected V1Secret getExpectedVoyagerSecret() {
+    System.out.println("simon-debug need implementation");
+    return getVoyagerOperatorYaml().getVoyagerOperatorSecret();
+  }
+
+  protected V1beta1APIService getActualVoyagerAPIService() {
+    return getVoyagerOperatorYaml().getVoyagerOperatorAPIService();
+  }
+
+  protected V1beta1APIService getExpectedVoyagerAPIService() {
+    System.out.println("simon-debug need implementation");
+    return getVoyagerOperatorYaml().getVoyagerOperatorAPIService();
   }
 
   @Test

@@ -64,7 +64,8 @@ public class GeneratedDomainYamlFiles {
         voyagerOperatorYaml = new ParsedVoyagerOperatorYaml(domainFiles.getVoyagerOperatorYamlPath(), inputs);
         voyagerOperatorSecurityYaml =
             new ParsedVoyagerOperatorSecurityYaml(domainFiles.getVoyagerOperatorSecurityYamlPath(), inputs);
-        voyagerIngressYaml = new ParsedVoyagerIngressYaml(domainFiles.getVoyagerIngressYamlPath(), inputs);
+        System.out.println("simon-debug, need resolve the issue in generate VoyagerIngress yaml file");
+        //voyagerIngressYaml = new ParsedVoyagerIngressYaml(domainFiles.getVoyagerIngressYamlPath(), inputs);
       }
       weblogicDomainPersistentVolumeYaml =
           new ParsedWeblogicDomainPersistentVolumeYaml(

@@ -66,7 +66,7 @@ public class DomainFiles {
   }
 
   public Path getVoyagerIngressYamlPath() {
-    return getWeblogicDomainPath().resolve("voyager-ingress.yaml");
+    return getWeblogicDomainPath().resolve("weblogic-domain-voyager-ingress.yaml");
   }
 
   public Path getTraefikYamlPath() {

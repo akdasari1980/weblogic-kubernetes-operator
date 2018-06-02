@@ -26,7 +26,7 @@ public class ParsedVoyagerOperatorYaml extends ParsedKubernetesYaml {
     return getDeployments().find(getVoyagerOperatorName());
   }
 
-  public V1Secret getVoyagerOperatorSecrets() {
+  public V1Secret getVoyagerOperatorSecret() {
     return getSecrets().find(getVoyagerOperatorName() + "-cert");
   }
 

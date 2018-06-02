@@ -273,6 +273,34 @@ public class ParsedKubernetesYaml {
     protected V1ObjectMeta getMetadata(V1beta1APIService instance) {
       return instance.getMetadata();
     }
+
+    @SuppressWarnings("rawtypes")
+    @Override
+    public void add(Map objectAsMap) {
+      convertCaBundleFromBase64EncodedStringToByteArray(objectAsMap);
+      super.add(objectAsMap);
+    }
+
+    /**
+     * The kubernetes server expects that the caBundle in yaml is a base64 encoded string. On the other
+     * hand, the kubernetes APIServiceSpec class expects that the caBundle in yaml is a byte array. Convert from
+     * a base64 encoded string to a byte array so that the yaml can be parsed into the kubernetes
+     * APIServiceSpec class. YUCK! I'm assuming that at some point in the future, the kubernetes APIServiceSpec
+     * class will catch up and expect base64 encoded strings too.
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void convertCaBundleFromBase64EncodedStringToByteArray(Map objectAsMap) {
+      Map specAsMap = (Map)objectAsMap.get("spec");
+      if (specAsMap == null) {
+        return;
+      }
+      String caBundleValueAsBase64EncodedString = (String) specAsMap.get("caBundle");
+      if (caBundleValueAsBase64EncodedString == null) {
+        return;
+      }
+      byte[] caBundleAsBytes = Base64.decodeBase64(caBundleValueAsBase64EncodedString);
+      specAsMap.put("caBundle", caBundleAsBytes);
+    }
   }
 
   private static class ConfigMapHandler extends TypeHandler<V1ConfigMap> {
